@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: lab2-postgres
+    environment:
+      POSTGRES_DB: lab
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: lab2-clickhouse
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: lab
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --password lab --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  spark:
+    image: apache/spark:3.5.1
+    container_name: lab2-spark
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/lab
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+      CLICKHOUSE_URL: jdbc:clickhouse://clickhouse:8123/default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: lab
+      HOME: /tmp
+      DATA_PATH: /data/*.csv
+    volumes:
+      - ./spark_jobs:/opt/spark-apps
+      - ./исходные данные:/data:ro
+    command: ["sleep", "infinity"]
+
+volumes:
+  postgres_data:
+  clickhouse_data:
