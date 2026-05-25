@@ -37,6 +37,7 @@ services:
   spark:
     image: apache/spark:3.5.1
     container_name: lab2-spark
+    user: root
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,11 +52,30 @@ services:
       CLICKHOUSE_PASSWORD: lab
       HOME: /tmp
       DATA_PATH: /data/*.csv
+    ports:
+      - "4040:4040"
     volumes:
       - ./spark_jobs:/opt/spark-apps
       - ./исходные данные:/data:ro
-    command: ["sleep", "infinity"]
+      - spark_events:/tmp/spark-events
+    command: ["/bin/sh", "-c", "mkdir -p /tmp/spark-events && chmod 777 /tmp/spark-events && sleep infinity"]
+
+  spark-history:
+    image: apache/spark:3.5.1
+    container_name: lab2-spark-history
+    user: root
+    depends_on:
+      - spark
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      SPARK_HISTORY_OPTS: "-Dspark.history.fs.logDirectory=file:/tmp/spark-events -Dspark.history.ui.port=18080"
+    ports:
+      - "18080:18080"
+    volumes:
+      - spark_events:/tmp/spark-events
+    command: ["/bin/sh", "-c", "mkdir -p /tmp/spark-events && chmod 777 /tmp/spark-events && /opt/spark/sbin/start-history-server.sh"]
 
 volumes:
   postgres_data:
   clickhouse_data:
+  spark_events:

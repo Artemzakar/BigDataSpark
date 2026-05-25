@@ -61,19 +61,19 @@ docker compose up -d
 Загрузить исходные CSV в PostgreSQL:
 
 ```bash
-docker compose exec spark /opt/spark/bin/spark-submit --conf spark.jars.ivy=/tmp/.ivy2 --packages org.postgresql:postgresql:42.7.3,com.clickhouse:clickhouse-jdbc:0.6.3 /opt/spark-apps/01_load_raw_to_postgres.py
+docker compose exec spark /opt/spark/bin/spark-submit --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.ui.bindAddress=0.0.0.0 --conf spark.ui.port=4040 --conf spark.eventLog.enabled=true --conf spark.eventLog.dir=file:/tmp/spark-events --packages org.postgresql:postgresql:42.7.3,com.clickhouse:clickhouse-jdbc:0.6.3 /opt/spark-apps/01_load_raw_to_postgres.py
 ```
 
 Построить модель звезда в PostgreSQL:
 
 ```bash
-docker compose exec spark /opt/spark/bin/spark-submit --conf spark.jars.ivy=/tmp/.ivy2 --packages org.postgresql:postgresql:42.7.3,com.clickhouse:clickhouse-jdbc:0.6.3 /opt/spark-apps/02_build_star_schema.py
+docker compose exec spark /opt/spark/bin/spark-submit --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.ui.bindAddress=0.0.0.0 --conf spark.ui.port=4040 --conf spark.eventLog.enabled=true --conf spark.eventLog.dir=file:/tmp/spark-events --packages org.postgresql:postgresql:42.7.3,com.clickhouse:clickhouse-jdbc:0.6.3 /opt/spark-apps/02_build_star_schema.py
 ```
 
 Построить отчеты в ClickHouse:
 
 ```bash
-docker compose exec spark /opt/spark/bin/spark-submit --conf spark.jars.ivy=/tmp/.ivy2 --packages org.postgresql:postgresql:42.7.3,com.clickhouse:clickhouse-jdbc:0.6.3 /opt/spark-apps/03_build_clickhouse_reports.py
+docker compose exec spark /opt/spark/bin/spark-submit --conf spark.jars.ivy=/tmp/.ivy2 --conf spark.ui.bindAddress=0.0.0.0 --conf spark.ui.port=4040 --conf spark.eventLog.enabled=true --conf spark.eventLog.dir=file:/tmp/spark-events --packages org.postgresql:postgresql:42.7.3,com.clickhouse:clickhouse-jdbc:0.6.3 /opt/spark-apps/03_build_clickhouse_reports.py
 ```
 
 Остановить контейнеры:
@@ -99,6 +99,18 @@ ClickHouse:
 - Database: `default`
 - User: `default`
 - Password: `lab`
+
+## Spark UI
+
+Во время выполнения Spark-job можно открыть live UI:
+
+- `http://localhost:4040`
+
+После завершения Spark-job можно открыть Spark History Server:
+
+- `http://localhost:18080`
+
+В History Server нужно выбрать приложение `lab2-load-raw-to-postgres`, `lab2-build-star-schema` или `lab2-build-clickhouse-reports` и показать вкладки `Jobs`, `Stages`, `SQL / DataFrame`.
 
 ## Проверка
 
